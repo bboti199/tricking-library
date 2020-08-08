@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using TrickingLibrary.Api.Models;
+using TrickingLibrary.Api.Forms;
+using TrickingLibrary.Api.ViewModels;
+using TrickingLibrary.Data;
+using TrickingLibrary.Models;
 
 namespace TrickingLibrary.Api.Controllers
 {
@@ -9,36 +14,76 @@ namespace TrickingLibrary.Api.Controllers
     [Route("api/[controller]")]
     public class TricksController : ControllerBase
     {
-        private readonly TrickyStore _store;
+        private readonly AppDbContext _ctx;
 
-        public TricksController(TrickyStore store)
+        public TricksController(AppDbContext ctx)
         {
-            _store = store;
+            _ctx = ctx;
         }
 
         [HttpGet]
-        public IActionResult All() => Ok(_store.All);
+        public IEnumerable<object> All()
+        {
+            return _ctx.Tricks.Select(TrickViewModels.Default).ToList();
+        }
 
         [HttpGet("{id}")]
-        public IActionResult Get(int id) => Ok(_store.All.FirstOrDefault(x => x.Id == id));
+        public object Get(string id)
+        {
+            return _ctx.Tricks
+                .Where(x => x.Id.Equals(id, StringComparison.InvariantCultureIgnoreCase))
+                .Select(TrickViewModels.Default)
+                .FirstOrDefault();
+        }
+
+        [HttpGet("{trickId}/submissions")]
+        public IEnumerable<Submission> ListSubmissionsForTrick(string trickId)
+        {
+            return _ctx.Submissions
+                .Where(x => x.TrickId.Equals(trickId, StringComparison.InvariantCultureIgnoreCase))
+                .ToList();
+        }
 
         [HttpPost]
-        public IActionResult Create([FromBody] Trick trick)
+        public async Task<object> Create([FromBody] TrickForm trickForm)
         {
-            _store.Add(trick);
-            return Ok();
+            var trick = new Trick
+            {
+                Id = trickForm.Name.Replace(" ", "-").ToLowerInvariant(),
+                Name = trickForm.Name,
+                Description = trickForm.Description,
+                Difficulty = trickForm.Difficulty,
+                TrickCategories = trickForm.Categories.Select(x => new TrickCategory
+                {
+                    CategoryId = x
+                }).ToList()
+            };
+
+            _ctx.Add(trick);
+            await _ctx.SaveChangesAsync();
+            return TrickViewModels.Default.Compile().Invoke(trick);
         }
 
         [HttpPut]
-        public IActionResult Update([FromBody] Trick trick)
+        public async Task<object> Update([FromBody] Trick trick)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(trick.Id)) return null;
+
+            _ctx.Add(trick);
+            await _ctx.SaveChangesAsync();
+            return TrickViewModels.Default.Compile().Invoke(trick);
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
-            throw new NotImplementedException();
+            var trick = _ctx.Tricks.FirstOrDefault(x => x.Id.Equals(id));
+
+            if (trick == null) return NotFound();
+
+            trick.Deleted = true;
+            await _ctx.SaveChangesAsync();
+            return Ok();
         }
     }
 }

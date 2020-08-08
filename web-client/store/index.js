@@ -3,13 +3,13 @@
 export const state = initState
 
 export const mutations = {
-  reset(state){
+  reset(state) {
     Object.assign(state, initState())
   }
 }
 
 export const actions = {
-  async nuxtServerInit({commit, dispatch}){
-    await dispatch("tricks/fetchTricks")
+  nuxtServerInit({dispatch}) {
+    return dispatch('tricks/fetchTricks')
   }
 }

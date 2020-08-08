@@ -16,7 +16,7 @@ export default {
   ** See https://nuxtjs.org/api/configuration-head
   */
   head: {
-    titleTemplate: '%s - ' + process.env.npm_package_name,
+    titleTemplate: '%s - Tricking Library',
     title: process.env.npm_package_name || '',
     meta: [
       { charset: 'utf-8' },
@@ -31,6 +31,7 @@ export default {
   ** Global CSS
   */
   css: [
+    '@/assets/css/main.scss'
   ],
   /*
   ** Plugins to load before mounting the App
@@ -60,13 +61,14 @@ export default {
   ** Axios module configuration
   ** See https://axios.nuxtjs.org/options
   */
-  axios: {},
+  axios: {
+    baseURL: "http://localhost:5000"
+  },
   /*
   ** vuetify module configuration
   ** https://github.com/nuxt-community/vuetify-module
   */
   vuetify: {
-    customVariables: ['~/assets/variables.scss'],
     theme: {
       dark: true,
       themes: {
