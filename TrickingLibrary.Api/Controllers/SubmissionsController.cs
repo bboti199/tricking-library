@@ -1,7 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TrickingLibrary.Api.BackgroundServices;
+using TrickingLibrary.Api.BackgroundServices.VideoEditing;
+using TrickingLibrary.Api.Forms;
 using TrickingLibrary.Data;
 using TrickingLibrary.Models;
 
@@ -21,21 +27,49 @@ namespace TrickingLibrary.Api.Controllers
         [HttpGet]
         public IEnumerable<Submission> All()
         {
-            return _ctx.Submissions.ToList();
+            return _ctx.Submissions
+                .Include(x => x.Video)
+                .Where(x => x.VideoProcessed)
+                .ToList();
         }
 
         [HttpGet("{id}")]
         public Submission Get(int id)
         {
-            return _ctx.Submissions.FirstOrDefault(x => x.Id.Equals(id));
+            Console.WriteLine(id);
+            return _ctx.Submissions
+                .Where(x => x.VideoProcessed)
+                .FirstOrDefault(x => x.Id.Equals(id));
         }
 
         [HttpPost]
-        public async Task<Submission> Create([FromBody] Submission submission)
+        public async Task<IActionResult> Create(
+            [FromBody] SubmissionForm submissionForm,
+            [FromServices] Channel<EditVideoMessage> channel,
+            [FromServices] VideoManager videoManager)
         {
+            if (!videoManager.TemporaryFileExists(submissionForm.Video))
+            {
+                return BadRequest();
+            }
+
+            var submission = new Submission
+            {
+                TrickId = submissionForm.TrickId,
+                VideoProcessed = false,
+                Description = submissionForm.Description
+            };
+            
+            submission.VideoProcessed = false;
             _ctx.Add(submission);
             await _ctx.SaveChangesAsync();
-            return submission;
+            await channel.Writer.WriteAsync(new EditVideoMessage
+            {
+                SubmissionId = submission.Id,
+                Input = submissionForm.Video,
+            });
+            
+            return Ok(submission);
         }
 
         [HttpPut]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TrickingLibrary.Api.Forms;
 using TrickingLibrary.Api.ViewModels;
 using TrickingLibrary.Data;
@@ -24,7 +25,7 @@ namespace TrickingLibrary.Api.Controllers
         [HttpGet]
         public IEnumerable<object> All()
         {
-            return _ctx.Tricks.Select(TrickViewModels.Default).ToList();
+            return _ctx.Tricks.Select(TrickViewModels.Projection).ToList();
         }
 
         [HttpGet("{id}")]
@@ -32,7 +33,7 @@ namespace TrickingLibrary.Api.Controllers
         {
             return _ctx.Tricks
                 .Where(x => x.Id.Equals(id, StringComparison.InvariantCultureIgnoreCase))
-                .Select(TrickViewModels.Default)
+                .Select(TrickViewModels.Projection)
                 .FirstOrDefault();
         }
 
@@ -40,6 +41,7 @@ namespace TrickingLibrary.Api.Controllers
         public IEnumerable<Submission> ListSubmissionsForTrick(string trickId)
         {
             return _ctx.Submissions
+                .Include(x => x.Video)
                 .Where(x => x.TrickId.Equals(trickId, StringComparison.InvariantCultureIgnoreCase))
                 .ToList();
         }
@@ -61,7 +63,7 @@ namespace TrickingLibrary.Api.Controllers
 
             _ctx.Add(trick);
             await _ctx.SaveChangesAsync();
-            return TrickViewModels.Default.Compile().Invoke(trick);
+            return TrickViewModels.Create(trick);
         }
 
         [HttpPut]
@@ -71,7 +73,7 @@ namespace TrickingLibrary.Api.Controllers
 
             _ctx.Add(trick);
             await _ctx.SaveChangesAsync();
-            return TrickViewModels.Default.Compile().Invoke(trick);
+            return TrickViewModels.Create(trick);
         }
 
         [HttpDelete("{id}")]

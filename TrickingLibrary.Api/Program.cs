@@ -1,14 +1,10 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using TrickingLibrary.Data;
 using TrickingLibrary.Models;
+using TrickingLibrary.Models.Moderation;
 
 namespace TrickingLibrary.Api
 {
@@ -40,10 +36,22 @@ namespace TrickingLibrary.Api
                         Difficulty = "easy",
                         TrickCategories = new List<TrickCategory>
                         {
-                            new TrickCategory{CategoryId = "flip"}
+                            new TrickCategory {CategoryId = "flip"}
                         }
                     });
                     
+                    ctx.Add(new Trick
+                    {
+                        Id = "forwards-roll",
+                        Name = "Forwards Roll",
+                        Description = "Test forwards roll",
+                        Difficulty = "easy",
+                        TrickCategories = new List<TrickCategory>
+                        {
+                            new TrickCategory {CategoryId = "flip"}
+                        }
+                    });
+
                     ctx.Add(new Trick
                     {
                         Id = "back-flip",
@@ -52,7 +60,7 @@ namespace TrickingLibrary.Api
                         Difficulty = "medium",
                         TrickCategories = new List<TrickCategory>
                         {
-                            new TrickCategory{CategoryId = "flip"}
+                            new TrickCategory {CategoryId = "flip"}
                         },
                         Prerequisites = new List<TrickRelationship>
                         {
@@ -67,25 +75,39 @@ namespace TrickingLibrary.Api
                     {
                         TrickId = "back-flip",
                         Description = "Test description",
-                        Video = "0jyrgnjc.2qm.mp4"
+                        Video = new Video
+                        {
+                            VideoLink = "one.mp4",
+                            ThumbLink = "one.jpg"
+                        },
+                        VideoProcessed = true
                     });
-                    
-                    ctx.Add(new Submission
+
+                    ctx.Add(new ModerationItem
                     {
-                        TrickId = "back-flip",
-                        Description = "Test description for second submission",
-                        Video = "iartyx4t.yiw.mp4"
+                        Target = "forwards-roll",
+                        Type = ModerationTypes.Trick
                     });
-                    
+
+                    /* ctx.Add(new Submission
+                     {
+                         TrickId = "back-flip",
+                         Description = "Test description for second submission",
+                         Video = "iartyx4t.yiw.mp4",
+                         VideoProcessed = true
+                     });*/
+
                     ctx.SaveChanges();
                 }
             }
-            
+
             host.Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+        }
     }
 }

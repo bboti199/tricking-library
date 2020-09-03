@@ -6,6 +6,10 @@ export default {
   ** See https://nuxtjs.org/api/configuration-mode
   */
   mode: 'universal',
+
+  publicRuntimeConfig: {
+    api: process.env.API_URL
+  },
   /*
   ** Nuxt target
   ** See https://nuxtjs.org/api/configuration-target
@@ -17,7 +21,7 @@ export default {
   */
   head: {
     titleTemplate: '%s - Tricking Library',
-    title: process.env.npm_package_name || '',
+    title: 'Welcome',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },

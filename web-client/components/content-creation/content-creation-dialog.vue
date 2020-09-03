@@ -23,11 +23,6 @@
       <component :is="component"></component>
     </div>
 
-    <div class="d-flex justify-center my-4">
-      <v-btn @click="reset">
-        Close
-      </v-btn>
-    </div>
   </v-dialog>
 </template>
 
@@ -53,7 +48,7 @@
         ]
       }
     },
-    methods: mapMutations('video-upload', ['reset', 'activate']),
+    methods: mapMutations('video-upload', ['activate']),
   }
 </script>
 
